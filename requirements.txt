@@ -1,0 +1,47 @@
+# ─── Google ADK ───────────────────────────────────────────
+google-adk>=1.0.0
+
+# ─── LLM / AI ─────────────────────────────────────────────
+google-generativeai>=0.5.0
+
+# ─── Data & Technical Analysis ────────────────────────────
+pandas>=2.0.0
+numpy>=1.26.0
+pandas-ta>=0.3.14b
+yfinance>=0.2.40                  # fallback data source during dev
+
+# ─── WebSocket / Async ────────────────────────────────────
+websockets>=12.0
+aiohttp>=3.9.0
+asyncio>=3.4.3
+
+# ─── Database ─────────────────────────────────────────────
+aiosqlite>=0.20.0                 # async SQLite support
+sqlalchemy[asyncio]>=2.0.0
+greenlet>=3.0.0                   # Required for SQLAlchemy async + sync creation
+beautifulsoup4>=4.12.0            # For future news parsing safety
+
+
+
+# ─── Config / Validation ──────────────────────────────────
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.0
+
+# ─── Broker APIs (Indian Markets) ─────────────────────────
+kiteconnect>=5.0.0              # uncomment for Zerodha
+# fyers-apiv3>=3.0.0              # uncomment for Fyers
+
+# ─── Rate Limiting / Utils ────────────────────────────────
+tenacity>=8.2.0                   # retry logic
+httpx>=0.27.0
+python-json-logger>=2.0.7
+
+# ─── Dev / Testing ────────────────────────────────────────
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+black>=24.0.0
+
+# API Server
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0

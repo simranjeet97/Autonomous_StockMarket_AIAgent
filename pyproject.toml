@@ -1,0 +1,32 @@
+[project]
+name = "stockmarket-adk"
+version = "0.1.0"
+description = "Production-ready AI Trading Agent using Google ADK & Gemini 2.0 Flash"
+authors = [{ name = "StockMarket ADK Team" }]
+requires-python = ">=3.11"
+readme = "README.md"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+explicit_package_bases = true
+namespace_packages = true
+exclude = [".venv", "__pycache__"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "B", "I", "UP", "N", "S", "A", "C4", "T20", "RET", "SIM", "ARG", "PTH", "ERA", "PL", "RUF"]
+ignore = ["BLE001"] # Ignoring blind exceptions as per project convention
+fix = true
+
+[tool.ruff.isort]
+known-first-party = ["api", "core", "tools", "trading_agent", "agents"]
