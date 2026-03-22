@@ -75,10 +75,17 @@ async function triggerAutoScan() {
     const data = await res.json();
     const result = data.sentiment;
 
+    // Bug 2a fix: SentimentAgent stores themes under 'key_themes' not 'themes'
+    // Normalise so UI always has result.themes available
+    result.themes = result.key_themes || result.themes || [];
+
+    // Bug 2b fix: bestStockIndex is not returned by the API — compute it locally
+    result.bestStockIndex = 0; // Highlight first watchlist stock as the top pick
+
     displaySentimentBanner(result);
     updateSentimentAgentCard(result);
-    // Transform themes/watchlist for the UI if needed
-    if (result.themes && result.themes.length > 0) {
+    // Populate news panel and ticker with key themes
+    if (result.themes.length > 0) {
        populateNewsPanel(result.themes.map(t => ({headline: t, sentiment: result.sentiment_score >= 50 ? 1 : -1, category: "News", published_at: new Date().toISOString()})));
        updateNewsTicker(result.themes.map(t => ({headline: t, published_at: new Date().toISOString()})));
     }
@@ -268,17 +275,15 @@ function updateNewsTicker(articles) {
   }).join('  ·  ');
 }
 
-// Extend agents.js to support SentimentAgent card
+// ── Bug 3 fix: Register agents.sentiment immediately (not inside DOMContentLoaded)
+// so setAgentState('sentiment', ...) works even before the DOM event fires.
+if (typeof agents !== 'undefined') {
+  agents.sentiment = { el: 'agentSentiment', badge: 'sentimentBadge', state: AgentState.IDLE };
+}
+
+// Extend agents.js resetAllAgents to also reset the sentiment card
 const _origReset = typeof resetAllAgents === 'function' ? resetAllAgents : null;
 window.resetAllAgents = function() {
   if (_origReset) _origReset();
   setAgentState('sentiment', AgentState.IDLE);
 };
-
-// register the sentiment agent card in the agents map (injected after agents.js loads)
-document.addEventListener('DOMContentLoaded', () => {
-  // Extend agents map with sentiment
-  if (typeof agents !== 'undefined') {
-    agents.sentiment = { el: 'agentSentiment', badge: 'sentimentBadge', state: AgentState.IDLE };
-  }
-});

@@ -12,7 +12,7 @@ import logging
 
 import numpy as np
 
-from tools.market_data_tools import get_ohlc
+from skills.market_data.tools import get_ohlc
 
 logger = logging.getLogger(__name__)
 

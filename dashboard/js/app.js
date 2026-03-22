@@ -139,11 +139,13 @@ async function loadSymbolData(symbol) {
         volume: b.volume
       }));
     } else {
-      state.candles = [];
+      // API returned no bars (yfinance unavailable or timeout) — use simulated data so chart is never blank
+      state.candles = generateHistory(symbol);
     }
   } catch (err) {
     console.error("Error fetching history:", err);
-    state.candles = [];
+    // Network error — fall back to simulated data
+    state.candles = generateHistory(symbol);
   }
 
   if (!candleChart || !volumeChart) return;

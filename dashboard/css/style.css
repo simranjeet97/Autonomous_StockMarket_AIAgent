@@ -78,32 +78,77 @@ body {
   z-index: 100;
 }
 
-.header-left { display: flex; align-items: center; gap: 20px; }
+.header-left { display: flex; align-items: center; gap: 40px; }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-family: var(--font-head);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  cursor: pointer;
 }
-.logo-icon { font-size: 1.4rem; }
-.logo-accent { color: var(--neon-green); }
+.logo-icon { font-size: 1.6rem; filter: drop-shadow(0 0 8px var(--neon-green)); }
+.logo-accent { color: var(--neon-green); position: relative; }
+.logo-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; width: 100%; height: 2px;
+  background: var(--neon-green);
+  border-radius: 2px;
+  opacity: 0.3;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px;
+  border-radius: 30px;
+  border: 1px solid var(--border);
+}
+
+.nav-link {
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 8px 18px;
+  border-radius: 25px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-link.active {
+  color: #0a0e1a;
+  background: var(--neon-green);
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
 
 .market-badge {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: rgba(0, 255, 136, 0.08);
+  padding: 6px 14px;
+  border-radius: 30px;
+  background: rgba(0, 255, 136, 0.05);
   border: 1px solid rgba(0, 255, 136, 0.2);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--neon-green);
+  backdrop-filter: blur(10px);
 }
 
 .badge-dot {

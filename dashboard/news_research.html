@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>News Research — StockMarket ADK</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      background-image:
+        radial-gradient(ellipse 60% 40% at 20% 0%, rgba(0,255,136,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 80% 100%, rgba(99,102,241,0.08) 0%, transparent 60%);
+    }
+    .research-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      padding: 24px;
+      height: calc(100vh - 120px);
+    }
+    .research-feed {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
+    }
+    .research-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--neon-green);
+      padding: 18px;
+      border-radius: 12px;
+      animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s ease;
+    }
+    .research-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      transform: translateX(4px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .research-card.sector { border-left-color: var(--neon-green); }
+    .research-card.geopolitical { border-left-color: var(--neon-red); }
+    .research-card.national { border-left-color: var(--neon-blue); }
+    .research-card.world { border-left-color: var(--neon-amber); }
+    
+    .research-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .agent-tag {
+      font-size: 0.65rem;
+      background: rgba(255,255,255,0.08);
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+    .impact-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .impact-chip {
+      background: rgba(0, 255, 136, 0.08);
+      color: var(--neon-green);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 0px;
+      padding: 20px 24px;
+    }
+    .control-header h1 {
+      font-family: var(--font-head);
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(to bottom, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+    .control-header p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo" onclick="window.location.href='index.html'">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">StockMarket<span class="logo-accent">ADK</span></span>
+    </div>
+    
+    <nav class="nav-links">
+      <a href="index.html" class="nav-link">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a href="news_research.html" class="nav-link active">
+        <span class="nav-icon">🔬</span> News Research
+      </a>
+    </nav>
+  </div>
+
+  <div class="header-right">
+    <div class="pnl-ticker" id="pnlTicker">
+      <span class="pnl-label">Day P&amp;L</span>
+      <span class="pnl-value" id="pnlValue">+₹0</span>
+    </div>
+    <div class="clock" id="clock">00:00:00</div>
+  </div>
+</header>
+
+<div class="control-header">
+  <div>
+    <h1>Parallel Research Hub</h1>
+    <p>Deploy specialized AI agents to scan multiple sources for market-moving news and stock impacts.</p>
+  </div>
+  <button class="btn btn-primary" id="startResearchBtn" onclick="startParallelResearch()">
+    <span class="btn-icon">🚀</span> Start Parallel Research
+  </button>
+</div>
+
+<main class="research-grid">
+  <aside class="left-panel">
+    <h2 class="panel-title">Active Researchers</h2>
+    <div class="agent-status-list">
+      <!-- Sector Agent -->
+      <div class="agent-card" id="agentSector">
+        <div class="agent-header">
+          <span class="agent-icon">🏢</span>
+          <div class="agent-info">
+            <span class="agent-name">SectorAgent</span>
+            <span class="agent-role">Industry Specialist</span>
+          </div>
+          <span class="agent-badge badge-idle" id="sectorBadge">IDLE</span>
+        </div>
+      </div>
+      <!-- Geo Agent -->
+      <div class="agent-card" id="agentGeo">
+        <div class="agent-header">
+          <span class="agent-icon">🌍</span>
+          <div class="agent-info">
+            <span class="agent-name">GeoAgent</span>
+            <span class="agent-role">Global Macro</span>
+          </div>
+          <span class="agent-badge badge-idle" id="geoBadge">IDLE</span>
+        </div>
+      </div>
+      <!-- National Agent -->
+      <div class="agent-card" id="agentNational">
+        <div class="agent-header">
+          <span class="agent-icon">🇮🇳</span>
+          <div class="agent-info">
+            <span class="agent-name">NationalAgent</span>
+            <span class="agent-role">Policy & RBI</span>
+          </div>
+          <span class="agent-badge badge-idle" id="nationalBadge">IDLE</span>
+        </div>
+      </div>
+      <!-- World Agent -->
+      <div class="agent-card" id="agentWorld">
+        <div class="agent-header">
+          <span class="agent-icon">🏛️</span>
+          <div class="agent-info">
+            <span class="agent-name">WorldAgent</span>
+            <span class="agent-role">Global Finance</span>
+          </div>
+          <span class="agent-badge badge-idle" id="worldBadge">IDLE</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <section class="research-feed" id="researchFeed">
+    <div class="placeholder-msg" style="text-align: center; color: var(--text-dim); margin-top: 100px;">
+      Click "Start Parallel Research" to deploy agents...
+    </div>
+  </section>
+</main>
+
+<div id="toastContainer" class="toast-container"></div>
+<footer class="status-bar">
+    <div class="status-item">
+      <span class="status-dot dot-green"></span>
+      <span>ADK: Multi-Agent Parallel Enabled</span>
+    </div>
+</footer>
+
+<script src="js/news_research.js"></script>
+<script>
+    // Simple clock update
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        });
+    }, 1000);
+</script>
+</body>
+</html>

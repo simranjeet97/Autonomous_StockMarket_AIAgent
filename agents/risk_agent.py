@@ -14,7 +14,7 @@ from __future__ import annotations
 from google.adk.agents import LlmAgent
 
 from core.config import settings
-from tools.risk_tools import get_risk_summary, validate_risk
+from skills.risk.tools import get_risk_summary, validate_risk
 
 RISK_INSTRUCTION = """
 You are the Risk Agent — the mandatory GUARDIAN of every trade in this system.

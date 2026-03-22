@@ -11,8 +11,8 @@ from __future__ import annotations
 from google.adk.agents import LlmAgent
 
 from core.config import settings
-from tools.market_data_tools import get_ltp, get_ohlc, get_quote
-from tools.technical_analysis_tools import calc_bollinger, calc_macd, calc_rsi, scan_signals
+from skills.market_data.tools import get_ltp, get_ohlc, get_quote
+from skills.technical_analysis.tools import calc_bollinger, calc_macd, calc_rsi, scan_signals
 
 ANALYST_INSTRUCTION = """
 You are the Analyst Agent for a professional Indian stock trading system.

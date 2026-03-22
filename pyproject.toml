@@ -29,4 +29,4 @@ ignore = ["BLE001"] # Ignoring blind exceptions as per project convention
 fix = true
 
 [tool.ruff.isort]
-known-first-party = ["api", "core", "tools", "trading_agent", "agents"]
+known-first-party = ["api", "core", "skills", "trading_agent", "agents"]

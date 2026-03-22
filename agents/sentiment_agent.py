@@ -22,7 +22,7 @@ Output contract (stored in ADK session state):
 
 from google.adk.agents import LlmAgent
 
-from tools.news_tools import (
+from skills.news.tools import (
     build_sentiment_watchlist,
     get_sector_sentiment,
     scan_geopolitical_events,

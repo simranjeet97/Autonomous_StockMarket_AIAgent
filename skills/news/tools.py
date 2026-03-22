@@ -386,6 +386,96 @@ def build_sentiment_watchlist(market_summary: str) -> dict[str, Any]:
     }
 
 
+# ── Tool 4: Yahoo Finance News Search ──────────────────────────────────────────
+def search_yahoo_finance_news(query: str, max_articles: int = 5) -> dict[str, Any]:
+    """
+    Search for news headlines specifically from Yahoo Finance via RSS.
+    """
+    try:
+        encoded = urllib.parse.quote(query)
+        # Yahoo Finance doesn't have a direct search RSS like Google, 
+        # but we can use their top stories or general finance news
+        url = f"https://finance.yahoo.com/rss/topstories"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=settings.news_timeout_sec) as resp:
+            xml_bytes = resp.read()
+
+        root = ET.fromstring(xml_bytes)
+        items = root.findall(".//item")[:max_articles]
+        articles = []
+        for item in items:
+            title = item.findtext("title", "")
+            # Only include if query matches title (basic filtering since it's top stories)
+            if query.lower() in title.lower() or not query:
+                articles.append({
+                    "title": title,
+                    "source": "Yahoo Finance",
+                    "published_at": item.findtext("pubDate", ""),
+                    "url": item.findtext("link", ""),
+                    "summary": re.sub(r"<[^>]+>", "", item.findtext("description", ""))[:300].strip(),
+                })
+        
+        return {"query": query, "articles": articles, "total": len(articles), "_source": "yahoo_finance"}
+    except Exception as e:
+        logger.error("Yahoo Finance RSS failed: %s", e)
+        return {"query": query, "articles": [], "total": 0, "_source": "yahoo_finance_failed"}
+
+
+# ── Tool 5: Analyze News Impact ──────────────────────────────────────────────
+def analyze_news_impact(headline: str, summary: str) -> list[str]:
+    """
+    Analyze a news headline/summary to identify specific NSE stocks impacted.
+    
+    This is intended to be called by an LLM agent as a tool.
+    It returns a list of potential NSE symbols.
+    """
+    impacted_stocks = []
+    combined = (headline + " " + summary).lower()
+    
+    # 1. Check sectoral mapping
+    for sector, stocks in SECTOR_TO_STOCKS.items():
+        if sector in combined:
+            impacted_stocks.extend(stocks[:2])
+            
+    # 2. Check keyword mapping
+    for keyword, sectors in GEOPOLITICAL_IMPACT.items():
+        if keyword in combined:
+            for s in sectors:
+                impacted_stocks.extend(SECTOR_TO_STOCKS.get(s, [])[:1])
+
+    # 3. Direct symbol mentions (basic heuristic)
+    # Most NSE symbols are uppercase and 3-10 chars
+    potential_symbols = re.findall(r"\b[A-Z]{3,10}\b", headline + " " + summary)
+    for sym in potential_symbols:
+        # Check if it's in our known list or looks like a typical NSE symbol
+        if sym not in impacted_stocks and len(impacted_stocks) < 10:
+            impacted_stocks.append(sym)
+
+    return list(set(impacted_stocks))[:10]
+
+
+# ── Tool 6: Parallel News Research (Synthesizer) ──────────────────────────────
+def synthesize_research(sector_news: list, geo_news: list, national_news: list, world_news: list) -> dict[str, Any]:
+    """
+    Synthesizes results from multiple research agents into a cohesive report.
+    """
+    all_articles = sector_news + geo_news + national_news + world_news
+    
+    # Identify unique stocks across all news
+    all_stocks = []
+    for art in all_articles:
+        impacts = analyze_news_impact(art.get("title", ""), art.get("summary", ""))
+        art["impacted_stocks"] = impacts
+        all_stocks.extend(impacts)
+        
+    return {
+        "summary": f"Analyzed {len(all_articles)} news items across 4 categories.",
+        "top_impacted_stocks": list(set(all_stocks))[:15],
+        "detailed_news": all_articles,
+        "timestamp": datetime.now(UTC).isoformat()
+    }
+
+
 # ── Stub fallback ──────────────────────────────────────────────────────────────
 def _stub_news(query: str) -> dict[str, Any]:
     """Returns placeholder news when all sources are unavailable."""

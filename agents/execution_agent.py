@@ -12,7 +12,7 @@ from __future__ import annotations
 from google.adk.agents import LlmAgent
 
 from core.config import settings
-from tools.broker_tools import cancel_order, get_order_book, get_positions, place_nifty_order
+from skills.broker.tools import cancel_order, get_order_book, get_positions, place_nifty_order
 
 EXECUTION_INSTRUCTION = """
 You are the Execution Agent — the ONLY agent in this system that places real orders.
