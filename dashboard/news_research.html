@@ -115,31 +115,43 @@
 </head>
 <body>
 
-<header class="header">
-  <div class="header-left">
-    <div class="logo" onclick="window.location.href='index.html'">
-      <span class="logo-icon">⚡</span>
-      <span class="logo-text">StockMarket<span class="logo-accent">ADK</span></span>
-    </div>
-    
-    <nav class="nav-links">
-      <a href="index.html" class="nav-link">
-        <span class="nav-icon">📊</span> Dashboard
-      </a>
-      <a href="news_research.html" class="nav-link active">
-        <span class="nav-icon">🔬</span> News Research
-      </a>
-    </nav>
-  </div>
+  <header class="header">
+    <div class="header-left">
+      <div class="logo" onclick="window.location.href='index.html'">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">StockMarket<span class="logo-accent">ADK</span></span>
+      </div>
 
-  <div class="header-right">
-    <div class="pnl-ticker" id="pnlTicker">
-      <span class="pnl-label">Day P&amp;L</span>
-      <span class="pnl-value" id="pnlValue">+₹0</span>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="news_research.html" class="nav-link active">
+          <span class="nav-icon">🔬</span> News Research
+        </a>
+      </nav>
+
+      <div class="market-badge" id="marketBadge">
+        <span class="badge-dot"></span>
+        <span id="marketStatus">Live Research</span>
+      </div>
     </div>
-    <div class="clock" id="clock">00:00:00</div>
-  </div>
-</header>
+
+    <div class="header-center">
+      <!-- Empty center to maintain 3-column layout and prevent shrinking -->
+      <div class="research-status-pill" style="font-size: 0.7rem; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border);">
+        <span class="btn-icon">🔭</span> Deep Market Scanning Active
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="pnl-ticker" id="pnlTicker">
+        <span class="pnl-label">Day P&amp;L</span>
+        <span class="pnl-value" id="pnlValue">+₹0</span>
+      </div>
+      <div class="clock" id="clock">00:00:00</div>
+    </div>
+  </header>
 
 <div class="control-header">
   <div>
@@ -217,7 +229,8 @@
     </div>
 </footer>
 
-<script src="js/news_research.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+<script src="js/news_research.js?v=2"></script>
 <script>
     // Simple clock update
     setInterval(() => {

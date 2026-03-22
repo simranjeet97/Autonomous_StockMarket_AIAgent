@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # ── ADK / Gemini ─────────────────────────────────────────────
     google_api_key: str = Field(default="", alias="GEMINI_API_KEY", description="AI Studio API key")
-    trading_model: str = Field(default="gemini-2.0-flash")
+    trading_model: str = Field(default="gemini-3-flash-preview")
 
     # Vertex AI (optional, for production)
     google_cloud_project: str = Field(default="")

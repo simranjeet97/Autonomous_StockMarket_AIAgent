@@ -114,8 +114,25 @@ function renderResearchResult(type, content) {
 }
 
 function formatContent(text) {
-  // Simple formatting for LLM output
-  return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n\n/g, '<br><br>');
+  if (typeof marked !== 'undefined') {
+    return marked.parse(text);
+  }
+  // Advanced regex fallback if CDN is blocked/offline
+  let html = text;
+  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+  html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+  // Handle lists
+  html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+  html = html.replace(/^- (.*$)/gim, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+  
+  // Clean up newlines, preserving them as breaks where needed
+  html = html.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+  // Remove breaks immediately following a heading or list
+  html = html.replace(/<\/h3><br>/g, '</h3>').replace(/<\/h2><br>/g, '</h2>').replace(/<\/ul><br>/g, '</ul>');
+  return html;
 }
 
 // Toast notification system

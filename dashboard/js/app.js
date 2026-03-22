@@ -22,6 +22,8 @@ const state = {
   candles: [],
 };
 
+let marketWS = null;
+
 // ── Market Data Simulation ────────────────────────────────────────────────────
 const MOCK_PRICES = {
   RELIANCE: 2950, TCS: 3800, INFY: 1780, HDFCBANK: 1650,
@@ -183,6 +185,81 @@ async function loadSymbolData(symbol) {
     document.getElementById('tickerHigh').textContent  = '₹' + last.high.toLocaleString('en-IN');
     document.getElementById('tickerLow').textContent   = '₹' + last.low.toLocaleString('en-IN');
     document.getElementById('tickerVol').textContent   = (last.volume / 1e5).toFixed(1) + 'L';
+  }
+
+  // Connect or update WebSocket for Live TBT data
+  connectMarketWS(symbol);
+}
+
+// ── Live WebSocket ────────────────────────────────────────────────────────────
+function connectMarketWS(symbol) {
+  if (marketWS && marketWS.readyState === WebSocket.OPEN) {
+    marketWS.send(JSON.stringify({ symbol: symbol }));
+    return;
+  }
+  
+  if (marketWS) { 
+      marketWS.close(); 
+  }
+  
+  marketWS = new WebSocket('ws://localhost:8000/api/ws/market');
+  
+  marketWS.onopen = () => {
+    console.log("WebSocket connected");
+    marketWS.send(JSON.stringify({ symbol: symbol }));
+  };
+  
+  marketWS.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data && data.ltp && data.symbol === state.symbol) {
+        updateTickerAndChart(data);
+      }
+    } catch (e) {
+      console.error("WS msg parse error", e);
+    }
+  };
+  
+  marketWS.onclose = () => {
+    console.log("WebSocket closed");
+    marketWS = null;
+    // basic reconnect after 5s
+    setTimeout(() => { if (!marketWS) connectMarketWS(state.symbol); }, 5000);
+  };
+}
+
+function updateTickerAndChart(data) {
+  // Update Ticker UI
+  document.getElementById('tickerPrice').textContent = '₹' + data.ltp.toLocaleString('en-IN');
+  const tc = document.getElementById('tickerChange');
+  const chgStr = (data.change >= 0 ? '+' : '') + data.change_pct.toFixed(2) + '%';
+  if (tc.textContent !== chgStr) {
+    tc.textContent = chgStr;
+    tc.className = 'ticker-change ' + (data.change >= 0 ? 'positive' : 'negative');
+  }
+
+  // Update chart's live candle
+  if (!state.candles || state.candles.length === 0) return;
+  const lastCandle = state.candles[state.candles.length - 1];
+  
+  // Real-time tick update
+  lastCandle.close = data.ltp;
+  if (data.ltp > lastCandle.high) lastCandle.high = data.ltp;
+  if (data.ltp < lastCandle.low) lastCandle.low = data.ltp;
+  
+  if (candleChart) {
+    try {
+      if (candleChart.config.type === 'candlestick') {
+         candleChart.data.datasets[0].data[state.candles.length - 1] = {
+            x: lastCandle.x, o: lastCandle.open, h: lastCandle.high, l: lastCandle.low, c: lastCandle.close
+         };
+      } else {
+         candleChart.data.datasets[0].data[state.candles.length - 1] = {
+            x: lastCandle.x, y: lastCandle.close
+         };
+      }
+      candleChart.update('none'); // Update without animation for smooth TBT rendering
+    } catch(e) {}
   }
 }
 
@@ -368,9 +445,25 @@ function renderSignalBanner(signal, approved) {
 
   const icons = { BUY: '🚀', SELL: '📉', HOLD: '⏸️' };
   icon.textContent = icons[signal.recommendation] || '📊';
-  rec.textContent  = signal.recommendation;
-  rec.className    = 'signal-rec ' + signal.recommendation.toLowerCase();
-  conf.textContent = signal.confidence + (approved ? ' · Risk APPROVED ✅' : ' · Risk BLOCKED 🚫');
+  let riskStatus = '';
+  if (signal.recommendation === 'HOLD') {
+    riskStatus = ' · Market Neutral ⏸️';
+  } else {
+    riskStatus = approved ? ' · Risk APPROVED ✅' : ' · Risk BLOCKED 🚫';
+  }
+  
+  conf.textContent = signal.confidence + riskStatus;
+
+  // News Insight Injection
+  const newsEl = document.getElementById('signalNews');
+  if (newsEl) {
+    if (signal.news_summary) {
+      newsEl.textContent = `News Insight: "${signal.news_summary}"`;
+      newsEl.style.display = 'block';
+    } else {
+      newsEl.style.display = 'none';
+    }
+  }
 
   execBtn.style.display = approved && signal.recommendation !== 'HOLD' ? 'inline-flex' : 'none';
 

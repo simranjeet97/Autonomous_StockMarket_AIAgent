@@ -424,10 +424,11 @@ def search_yahoo_finance_news(query: str, max_articles: int = 5) -> dict[str, An
 # ── Tool 5: Analyze News Impact ──────────────────────────────────────────────
 def analyze_news_impact(headline: str, summary: str) -> list[str]:
     """
-    Analyze a news headline/summary to identify specific NSE stocks impacted.
+    Analyze a news headline/summary to identify specific NSE stocks potentially impacted.
     
     This is intended to be called by an LLM agent as a tool.
     It returns a list of potential NSE symbols.
+    NOTE FOR LLM: You MUST analyze the news yourself to determine if the impact on these stocks is BULLISH (Long) or BEARISH (Short).
     """
     impacted_stocks = []
     combined = (headline + " " + summary).lower()

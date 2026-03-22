@@ -233,9 +233,175 @@ def calc_bollinger(symbol: str, period: int = 20, std_dev: float = 2.0) -> dict:
         return {"symbol": symbol, "upper_band": None, "signal": "error", "error": str(exc)}
 
 
+def calc_supertrend(symbol: str, period: int = 10, multiplier: float = 3.0) -> dict:
+    """
+    Calculate SuperTrend indicator.
+    
+    Args:
+        symbol: NSE ticker
+        period: ATR period (default 10)
+        multiplier: ATR multiplier (default 3.0)
+        
+    Returns:
+        dict with 'supertrend_line', 'direction', 'signal', 'current_price'
+    """
+    try:
+        df = _fetch_df(symbol, period=period + 50)
+        if df is None or len(df) < period:
+            return {"symbol": symbol, "supertrend_line": None, "signal": "insufficient_data"}
+
+        if _TA_AVAILABLE:
+            st = ta.supertrend(df['high'], df['low'], df['close'], length=period, multiplier=multiplier)
+            if st is None or st.empty:
+                return {"symbol": symbol, "supertrend_line": None, "signal": "insufficient_data"}
+            
+            clean_st = st.dropna()
+            if len(clean_st) == 0:
+                return {"symbol": symbol, "supertrend_line": None, "signal": "insufficient_data"}
+
+            last_row = clean_st.iloc[-1]
+            st_val = round(float(last_row.iloc[0]), 2)
+            direction = int(last_row.iloc[1]) # 1 for bullish, -1 for bearish
+        else:
+            # Simple fallback: Moving average instead of true ATR-based SuperTrend if pandas-ta missing
+            v = df['close'].values[-period:].astype(float)
+            st_val = round(np.mean(v) - (multiplier * np.std(v)), 2) # pseudo-supertrend
+            direction = 1 if float(df['close'].iloc[-1]) > st_val else -1
+
+        current_price = round(float(df['close'].iloc[-1]), 2)
+        signal = "bullish" if direction > 0 else "bearish"
+
+        return {
+            "symbol": symbol.upper(),
+            "indicator": "SuperTrend",
+            "period": period,
+            "multiplier": multiplier,
+            "supertrend_line": st_val,
+            "current_price": current_price,
+            "direction": direction,
+            "signal": signal,
+            "interpretation": f"Price ₹{current_price:.0f} {'above' if direction > 0 else 'below'} SuperTrend ₹{st_val:.0f} → {signal.upper()}"
+        }
+    except Exception as exc:
+        logger.error("calc_supertrend failed for %s: %s", symbol, exc)
+        return {"symbol": symbol, "supertrend_line": None, "signal": "error", "error": str(exc)}
+
+
+def calc_fibonacci_retracements(symbol: str, period: int = 60) -> dict:
+    """
+    Calculate standard Fibonacci retracement levels for the given period.
+    Levels: 0.236, 0.382, 0.500, 0.618, 0.786
+    """
+    try:
+        df = _fetch_df(symbol, period=period)
+        if df is None or len(df) < 10:
+            return {"symbol": symbol, "levels": None, "signal": "insufficient_data"}
+
+        high_price = float(df['high'].max())
+        low_price = float(df['low'].min())
+        diff = high_price - low_price
+        
+        levels = {
+            "0.0% (High)": round(high_price, 2),
+            "23.6%": round(high_price - 0.236 * diff, 2),
+            "38.2%": round(high_price - 0.382 * diff, 2),
+            "50.0%": round(high_price - 0.500 * diff, 2),
+            "61.8%": round(high_price - 0.618 * diff, 2),
+            "78.6%": round(high_price - 0.786 * diff, 2),
+            "100.0% (Low)": round(low_price, 2)
+        }
+        
+        current_price = round(float(df['close'].iloc[-1]), 2)
+        
+        # Determine nearest support/resistance
+        support = low_price
+        resistance = high_price
+        for lvl_name, val in reversed(levels.items()):
+            if val < current_price and val > support:
+                support = val
+        for lvl_name, val in levels.items():
+            if val > current_price and val < resistance:
+                resistance = val
+
+        # Simple signal: if above 50% it's bullish
+        is_bullish = current_price > levels["50.0%"]
+        signal = "bullish" if is_bullish else "bearish"
+
+        return {
+            "symbol": symbol.upper(),
+            "indicator": "Fibonacci",
+            "period_days": period,
+            "high": round(high_price, 2),
+            "low": round(low_price, 2),
+            "current_price": current_price,
+            "levels": levels,
+            "nearest_support": support,
+            "nearest_resistance": resistance,
+            "signal": signal,
+            "interpretation": f"Price ₹{current_price:.0f} between S:₹{support:.0f} and R:₹{resistance:.0f} (Trend: {signal.upper()})"
+        }
+    except Exception as exc:
+        logger.error("calc_fibonacci failed for %s: %s", symbol, exc)
+        return {"symbol": symbol, "levels": None, "signal": "error", "error": str(exc)}
+
+
+def calc_volume_profile(symbol: str, period: int = 60, bins: int = 15) -> dict:
+    """
+    Calculate basic Volume Profile to identify Point of Control (POC).
+    """
+    try:
+        df = _fetch_df(symbol, period=period)
+        if df is None or len(df) < 10:
+            return {"symbol": symbol, "poc": None, "signal": "insufficient_data"}
+
+        # Custom volume profile logic
+        df['typical_price'] = (df['high'] + df['low'] + df['close']) / 3
+        
+        min_p = df['low'].min()
+        max_p = df['high'].max()
+        bin_size = (max_p - min_p) / bins
+        
+        profile = {}
+        for idx, row in df.iterrows():
+            price = row['typical_price']
+            vol = row['volume']
+            bin_idx = int((price - min_p) / bin_size)
+            if bin_idx >= bins: bin_idx = bins - 1
+            
+            bin_price = min_p + (bin_idx * bin_size) + (bin_size / 2)
+            bin_price = round(float(bin_price), 2)
+            
+            if bin_price not in profile:
+                profile[bin_price] = 0
+            profile[bin_price] += int(vol)
+
+        if not profile:
+            return {"symbol": symbol, "poc": None, "signal": "insufficient_data"}
+
+        # Point of Control (Highest Volume Price)
+        poc_price = max(profile, key=profile.get)
+        current_price = round(float(df['close'].iloc[-1]), 2)
+        
+        signal = "bullish" if current_price > poc_price else "bearish"
+
+        return {
+            "symbol": symbol.upper(),
+            "indicator": "Volume Profile",
+            "period_days": period,
+            "poc_price": poc_price,
+            "poc_volume": profile[poc_price],
+            "current_price": current_price,
+            "signal": signal,
+            "interpretation": f"Price ₹{current_price:.0f} vs POC ₹{poc_price:.0f} → {signal.upper()}"
+        }
+    except Exception as exc:
+        logger.error("calc_volume_profile failed for %s: %s", symbol, exc)
+        return {"symbol": symbol, "poc": None, "signal": "error", "error": str(exc)}
+
+
 def scan_signals(symbol: str) -> dict:
     """
-    Run all three indicators and return a consolidated trade signal.
+    Run all six indicators and return a consolidated trade signal.
 
     Args:
         symbol: NSE ticker to scan
@@ -246,34 +412,59 @@ def scan_signals(symbol: str) -> dict:
     rsi = calc_rsi(symbol)
     macd = calc_macd(symbol)
     bb = calc_bollinger(symbol)
+    supertrend = calc_supertrend(symbol)
+    fib = calc_fibonacci_retracements(symbol)
+    vp = calc_volume_profile(symbol)
 
     buy_votes = 0
     sell_votes = 0
 
+    # 1. RSI
     if rsi.get("signal") == "oversold":
         buy_votes += 1
     elif rsi.get("signal") == "overbought":
         sell_votes += 1
 
+    # 2. MACD
     if macd.get("crossover_signal") == "bullish_crossover":
         buy_votes += 1
     elif macd.get("crossover_signal") == "bearish_crossover":
         sell_votes += 1
 
+    # 3. Bollinger
     if bb.get("signal") == "oversold_bounce":
         buy_votes += 1
     elif bb.get("signal") == "overbought_squeeze":
         sell_votes += 1
 
-    if buy_votes >= 2:
+    # 4. SuperTrend
+    if supertrend.get("signal") == "bullish":
+        buy_votes += 1
+    elif supertrend.get("signal") == "bearish":
+        sell_votes += 1
+
+    # 5. Fibonacci
+    if fib.get("signal") == "bullish":
+        buy_votes += 1
+    elif fib.get("signal") == "bearish":
+        sell_votes += 1
+
+    # 6. Volume Profile (POC)
+    if vp.get("signal") == "bullish":
+        buy_votes += 1
+    elif vp.get("signal") == "bearish":
+        sell_votes += 1
+
+    # 6 indicators total. 4 or more is strong commitment.
+    if buy_votes >= 4:
         recommendation = "BUY"
-        confidence = f"{buy_votes}/3 indicators bullish"
-    elif sell_votes >= 2:
+        confidence = f"{buy_votes}/6 indicators bullish"
+    elif sell_votes >= 4:
         recommendation = "SELL"
-        confidence = f"{sell_votes}/3 indicators bearish"
+        confidence = f"{sell_votes}/6 indicators bearish"
     else:
         recommendation = "HOLD"
-        confidence = "Mixed signals — no clear direction"
+        confidence = f"Mixed signals (B:{buy_votes} S:{sell_votes}) — no clear direction"
 
     return {
         "symbol": symbol.upper(),
@@ -284,4 +475,7 @@ def scan_signals(symbol: str) -> dict:
         "rsi": rsi,
         "macd": macd,
         "bollinger": bb,
+        "supertrend": supertrend,
+        "fibonacci": fib,
+        "volume_profile": vp,
     }

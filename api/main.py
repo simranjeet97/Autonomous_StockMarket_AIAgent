@@ -10,13 +10,16 @@ uvicorn api.main:app --reload --port 8000
 
 import logging
 import uuid
+import json
+import re
 from contextlib import asynccontextmanager
-from typing import Any
+import asyncio
+from typing import Any, List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from google.adk.runners import Runner
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
@@ -83,6 +86,11 @@ async def serve_index():
 @app.get("/news_research.html")
 async def serve_news_research():
     return FileResponse("dashboard/news_research.html")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
 
 # ── API Models ──────────────────────────────────────────────────────────────
@@ -197,7 +205,51 @@ async def fetch_quote(symbol: str) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.websocket("/api/ws/market")
+async def websocket_market_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    current_symbol = "RELIANCE"
+    logger.info("WebSocket connection established. Default symbol: %s", current_symbol)
+    try:
+        while True:
+            # Check for incoming messages to change symbol (non-blocking)
+            try:
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=1.0)
+                if isinstance(data, dict) and "symbol" in data:
+                    current_symbol = str(data["symbol"]).upper()
+                    logger.info("WebSocket symbol changed to: %s", current_symbol)
+            except asyncio.TimeoutError:
+                # No incoming message, proceed to send data
+                pass
+            
+            # Fetch LTP and send
+            tb_data = get_ltp(current_symbol)
+            await websocket.send_json(tb_data)
+            
+    except WebSocketDisconnect:
+        logger.info("WebSocket client disconnected.")
+    except Exception as e:
+        logger.error("WebSocket error: %s", e)
+
+
 session_service = InMemorySessionService()
+
+
+def extract_json(text: str) -> Optional[dict]:
+    """Robustly extract JSON block from LLM response text."""
+    try:
+        # Try finding JSON within code blocks first
+        match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
+        if match:
+            return json.loads(match.group(1))
+        
+        # Fallback: Find anything that looks like a JSON object
+        match = re.search(r"(\{.*\})", text, re.DOTALL)
+        if match:
+            return json.loads(match.group(1))
+    except (json.JSONDecodeError, Exception):
+        pass
+    return None
 
 
 async def run_agent_and_get_state(
@@ -232,19 +284,32 @@ async def run_sentiment_scan() -> dict[str, Any]:
     try:
         response, state = await run_agent_and_get_state(
             agent=SentimentAgent,
-            prompt="Analyze current market sentiment and give me a watchlist.",
-            session_id="sentiment_session",
+            prompt="Analyze current market sentiment and build a 5-stock watchlist.",
+            session_id=f"sentiment_scan_{uuid.uuid4().hex[:8]}",
         )
         sentiment_data = state.get("sentiment_analysis")
+        
+        # Refinement: Manually extract if output_key failed or was missing
+        if not sentiment_data or isinstance(sentiment_data, str):
+            sentiment_data = extract_json(response)
+            
         if not sentiment_data:
             sentiment_data = {
                 "market_sentiment": "NEUTRAL",
                 "sentiment_score": 50,
                 "macro_bias": "neutral",
-                "watchlist": ["RELIANCE", "HDFCBANK", "INFY", "TCS", "ICICIBANK"],
-                "themes": ["Unable to parse SentimentAgent JSON"],
-                "rationale": [],
+                "watchlist": ["RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK"],
+                "themes": ["System fallback used (parsing failed)"],
             }
+        
+        # Ensure themes key is present (normalise key_themes)
+        if "themes" not in sentiment_data and "key_themes" in sentiment_data:
+            sentiment_data["themes"] = sentiment_data["key_themes"]
+        elif "themes" not in sentiment_data:
+            sentiment_data["themes"] = []
+            
+        if "watchlist" not in sentiment_data:
+            sentiment_data["watchlist"] = ["RELIANCE", "TCS", "INFY"]
 
         async with AsyncSessionLocal() as session:
             archive = SentimentAnalysis(
@@ -270,8 +335,13 @@ async def run_technical_scan(req: SymbolRequest) -> dict[str, Any]:
             agent=analyst_agent, prompt=f"Analyze {req.symbol}", session_id=f"analyst_{req.symbol}"
         )
         signal_data = state.get("current_signal")
+        
+        # Refinement: Manually extract if output_key failed or was missing
+        if not signal_data or isinstance(signal_data, str):
+            signal_data = extract_json(response)
+            
         if not signal_data:
-            signal_data = {"symbol": req.symbol, "recommendation": "HOLD", "confidence": 0}
+            signal_data = {"symbol": req.symbol, "recommendation": "HOLD", "confidence": "0/6 indicators (fallback)"}
 
         async with AsyncSessionLocal() as session:
             audit = AuditLog(

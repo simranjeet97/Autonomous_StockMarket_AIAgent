@@ -76,7 +76,8 @@ Return a structured JSON block:
 
 ## Critical Rules
 - You MUST call `build_sentiment_watchlist()` before reporting — never guess stocks manually.
-- Your watchlist MUST have at least 5 NSE symbols.
+- Your watchlist MUST have at least 5 NSE symbols, preferably a mix of both LONG (to buy) and SHORT (to sell) candidates depending on the news.
+- In your `rationale` array, explicitly prefix each reason with LONG or SHORT (e.g., "LONG: TCS - Strong earnings", "SHORT: ONGC - Falling oil prices").
 - Always cite which news articles informed your view.
 - You are READ-ONLY. Never mention orders, execution, or trades.
 - sentiment_score: 0 = extreme fear, 50 = neutral, 100 = extreme greed.
@@ -85,7 +86,7 @@ Return a structured JSON block:
 # ── Agent Definition ──────────────────────────────────────────────────────────
 SentimentAgent = LlmAgent(
     name="SentimentAgent",
-    model="gemini-2.0-flash",
+    model="gemini-3-flash-preview",
     description=(
         "Scans national, international, and geopolitical news to determine "
         "market sentiment and produce a daily watchlist of 5 NSE stocks."
@@ -97,5 +98,4 @@ SentimentAgent = LlmAgent(
         scan_geopolitical_events,
         build_sentiment_watchlist,
     ],
-    output_key="sentiment_analysis",  # stores result in ADK session state
 )

@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StockMarket ADK — AI Trading Dashboard</title>
-  <meta name="description" content="Production-ready AI Trading Agent powered by Google ADK and Gemini 2.0 Flash for NSE/Nifty 50 markets." />
+  <meta name="description"
+    content="Production-ready AI Trading Agent powered by Google ADK and Gemini 2.0 Flash for NSE/Nifty 50 markets." />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
@@ -20,390 +24,397 @@
 
   <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body>
 
-<!-- ══════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════
      HEADER
 ══════════════════════════════════════════════════════ -->
-<header class="header">
-  <div class="header-left">
-    <div class="logo">
-      <span class="logo-icon">⚡</span>
-      <span class="logo-text">StockMarket<span class="logo-accent">ADK</span></span>
-    </div>
-    
-    <nav class="nav-links">
-      <a href="index.html" class="nav-link active">
-        <span class="nav-icon">📊</span> Dashboard
-      </a>
-      <a href="news_research.html" class="nav-link">
-        <span class="nav-icon">🔬</span> News Research
-      </a>
-    </nav>
+  <header class="header">
+    <div class="header-left">
+      <div class="logo" onclick="window.location.href='index.html'">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">StockMarket<span class="logo-accent">ADK</span></span>
+      </div>
 
-    <div class="market-badge" id="marketBadge">
-      <span class="badge-dot"></span>
-      <span id="marketStatus">Checking…</span>
-    </div>
-  </div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link active">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="news_research.html" class="nav-link">
+          <span class="nav-icon">🔬</span> News Research
+        </a>
+      </nav>
 
-  <div class="header-center">
-    <div class="symbol-picker">
-      <select id="symbolSelect" class="symbol-select">
-        <option value="RELIANCE">RELIANCE</option>
-        <option value="TCS">TCS</option>
-        <option value="INFY">INFY</option>
-        <option value="HDFCBANK">HDFCBANK</option>
-        <option value="ICICIBANK">ICICIBANK</option>
-        <option value="SBIN">SBIN</option>
-        <option value="WIPRO">WIPRO</option>
-        <option value="BAJFINANCE">BAJFINANCE</option>
-        <option value="HAL">HAL</option>
-        <option value="TATASTEEL">TATASTEEL</option>
-        <option value="SUNPHARMA">SUNPHARMA</option>
-        <option value="TATAMOTORS">TATAMOTORS</option>
-        <option value="BHARTIARTL">BHARTIARTL</option>
-        <option value="ONGC">ONGC</option>
-      </select>
-      <button class="btn btn-primary" id="scanBtn" onclick="triggerScan()">
-        <span class="btn-icon">🔍</span> Scan
-      </button>
-      <button class="btn btn-sentiment" id="autoScanBtn" onclick="triggerAutoScan()">
-        <span class="btn-icon">📰</span> Auto‑Scan
-      </button>
+      <div class="market-badge" id="marketBadge">
+        <span class="badge-dot"></span>
+        <span id="marketStatus">Checking…</span>
+      </div>
     </div>
-  </div>
 
-  <div class="header-right">
-    <div class="pnl-ticker" id="pnlTicker">
-      <span class="pnl-label">Day P&amp;L</span>
-      <span class="pnl-value" id="pnlValue">+₹0</span>
+    <div class="header-center">
+      <div class="symbol-picker">
+        <select id="symbolSelect" class="symbol-select">
+          <option value="RELIANCE">RELIANCE</option>
+          <option value="TCS">TCS</option>
+          <option value="INFY">INFY</option>
+          <option value="HDFCBANK">HDFCBANK</option>
+          <option value="ICICIBANK">ICICIBANK</option>
+          <option value="SBIN">SBIN</option>
+          <option value="WIPRO">WIPRO</option>
+          <option value="BAJFINANCE">BAJFINANCE</option>
+          <option value="HAL">HAL</option>
+          <option value="TATASTEEL">TATASTEEL</option>
+          <option value="SUNPHARMA">SUNPHARMA</option>
+          <option value="TATAMOTORS">TATAMOTORS</option>
+          <option value="BHARTIARTL">BHARTIARTL</option>
+          <option value="ONGC">ONGC</option>
+        </select>
+        <button class="btn btn-primary" id="scanBtn" onclick="triggerScan()">
+          <span class="btn-icon">🔍</span> Scan
+        </button>
+        <button class="btn btn-sentiment" id="autoScanBtn" onclick="triggerAutoScan()">
+          <span class="btn-icon">📰</span> Auto‑Scan
+        </button>
+      </div>
     </div>
-    <div class="clock" id="clock">00:00:00</div>
-  </div>
-</header>
 
-<!-- ══════════════════════════════════════════════════════
+    <div class="header-right">
+      <div class="pnl-ticker" id="pnlTicker">
+        <span class="pnl-label">Day P&amp;L</span>
+        <span class="pnl-value" id="pnlValue">+₹0</span>
+      </div>
+      <div class="clock" id="clock">00:00:00</div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════
      NEWS TICKER (scrolling headlines)
 ══════════════════════════════════════════════════════ -->
-<div class="news-ticker-bar" id="newsTickerBar">
-  <span class="news-ticker-label">📰 NEWS</span>
-  <div class="news-ticker-track">
-    <div class="news-ticker-content" id="newsTickerContent">
-      Markets await RBI policy decision ·  US Fed signals steady rates ·  Global IT stocks rally on strong earnings ·  India defense budget boost lifts HAL, BEL ·  Crude oil eases on OPEC output concerns ·  FII inflows surge, Nifty eyes fresh high
+  <div class="news-ticker-bar" id="newsTickerBar">
+    <span class="news-ticker-label">📰 NEWS</span>
+    <div class="news-ticker-track">
+      <div class="news-ticker-content" id="newsTickerContent">
+        Markets await RBI policy decision · US Fed signals steady rates · Global IT stocks rally on strong earnings ·
+        India defense budget boost lifts HAL, BEL · Crude oil eases on OPEC output concerns · FII inflows surge, Nifty
+        eyes fresh high
+      </div>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════
      SENTIMENT BANNER (shown after Auto-Scan)
 ══════════════════════════════════════════════════════ -->
-<div class="sentiment-banner" id="sentimentBanner" style="display:none;">
-  <div class="sentiment-left">
-    <div class="sentiment-mood" id="sentimentMood">NEUTRAL</div>
-    <div class="sentiment-score-wrap">
-      <div class="sentiment-score-bar">
-        <div class="sentiment-score-fill" id="sentimentScoreFill" style="width:50%"></div>
+  <div class="sentiment-banner" id="sentimentBanner" style="display:none;">
+    <div class="sentiment-left">
+      <div class="sentiment-mood" id="sentimentMood">NEUTRAL</div>
+      <div class="sentiment-score-wrap">
+        <div class="sentiment-score-bar">
+          <div class="sentiment-score-fill" id="sentimentScoreFill" style="width:50%"></div>
+        </div>
+        <span class="sentiment-score-label" id="sentimentScoreLabel">50 / 100</span>
       </div>
-      <span class="sentiment-score-label" id="sentimentScoreLabel">50 / 100</span>
+      <div class="sentiment-bias" id="sentimentBias">Macro: neutral</div>
     </div>
-    <div class="sentiment-bias" id="sentimentBias">Macro: neutral</div>
+    <div class="sentiment-middle">
+      <div class="sentiment-section-title">📌 Key Themes</div>
+      <div class="sentiment-themes" id="sentimentThemes">—</div>
+    </div>
+    <div class="sentiment-right">
+      <div class="sentiment-section-title">🎯 Auto-Selected Watchlist</div>
+      <div class="watchlist-chips" id="watchlistChips">—</div>
+    </div>
+    <button class="sentiment-close" onclick="document.getElementById('sentimentBanner').style.display='none'">✕</button>
   </div>
-  <div class="sentiment-middle">
-    <div class="sentiment-section-title">📌 Key Themes</div>
-    <div class="sentiment-themes" id="sentimentThemes">—</div>
-  </div>
-  <div class="sentiment-right">
-    <div class="sentiment-section-title">🎯 Auto-Selected Watchlist</div>
-    <div class="watchlist-chips" id="watchlistChips">—</div>
-  </div>
-  <button class="sentiment-close" onclick="document.getElementById('sentimentBanner').style.display='none'">✕</button>
-</div>
 
-<!-- ══════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════
      MAIN GRID
 ══════════════════════════════════════════════════════ -->
-<main class="main-grid">
+  <main class="main-grid">
 
-  <!-- ── LEFT PANEL: Agent Status ───────────────────────── -->
-  <aside class="left-panel">
-    <h2 class="panel-title">Agent Pipeline</h2>
+    <!-- ── LEFT PANEL: Agent Status ───────────────────────── -->
+    <aside class="left-panel">
+      <h2 class="panel-title">Agent Pipeline</h2>
 
-    <!-- Sentiment Agent (NEW) -->
-    <div class="agent-card" id="agentSentiment">
-      <div class="agent-header">
-        <span class="agent-icon">📰</span>
-        <div class="agent-info">
-          <span class="agent-name">SentimentAgent</span>
-          <span class="agent-role">News & Geopolitics</span>
-        </div>
-        <span class="agent-badge badge-idle" id="sentimentBadge">IDLE</span>
-      </div>
-      <div class="agent-stats" id="sentimentStats">
-        <div class="stat-row">
-          <span class="stat-label">Mood</span>
-          <span class="stat-value" id="sentimentMoodStat">—</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Score</span>
-          <span class="stat-value" id="sentimentScoreStat">—</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Watchlist</span>
-          <span class="stat-value small-text" id="sentimentWatchStat">—</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="pipeline-arrow">↓</div>
-
-    <div class="agent-card" id="agentRoot">
-      <div class="agent-header">
-        <span class="agent-icon">🧠</span>
-        <div class="agent-info">
-          <span class="agent-name">TradingRoot</span>
-          <span class="agent-role">Orchestrator</span>
-        </div>
-        <span class="agent-badge badge-idle" id="rootBadge">IDLE</span>
-      </div>
-      <div class="agent-progress" id="rootProgress"></div>
-    </div>
-
-    <div class="pipeline-arrow">↓</div>
-
-    <div class="agent-card" id="agentAnalyst">
-      <div class="agent-header">
-        <span class="agent-icon">📊</span>
-        <div class="agent-info">
-          <span class="agent-name">AnalystAgent</span>
-          <span class="agent-role">Technical Analysis</span>
-        </div>
-        <span class="agent-badge badge-idle" id="analystBadge">IDLE</span>
-      </div>
-      <div class="agent-stats">
-        <div class="stat-row">
-          <span class="stat-label">RSI</span>
-          <span class="stat-value" id="rsiValue">—</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">MACD</span>
-          <span class="stat-value" id="macdValue">—</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">BB</span>
-          <span class="stat-value" id="bbValue">—</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="pipeline-arrow">↓</div>
-
-    <div class="agent-card" id="agentRisk">
-      <div class="agent-header">
-        <span class="agent-icon">🛡️</span>
-        <div class="agent-info">
-          <span class="agent-name">RiskAgent</span>
-          <span class="agent-role">SEBI Guardian</span>
-        </div>
-        <span class="agent-badge badge-idle" id="riskBadge">IDLE</span>
-      </div>
-      <div class="risk-rules" id="riskRules">
-        <div class="rule-row"><span class="rule-icon">○</span> Daily Loss Limit</div>
-        <div class="rule-row"><span class="rule-icon">○</span> Position Limit</div>
-        <div class="rule-row"><span class="rule-icon">○</span> Market Hours</div>
-        <div class="rule-row"><span class="rule-icon">○</span> Order Validity</div>
-      </div>
-    </div>
-
-    <div class="pipeline-arrow">↓</div>
-
-    <div class="agent-card" id="agentExecution">
-      <div class="agent-header">
-        <span class="agent-icon">⚡</span>
-        <div class="agent-info">
-          <span class="agent-name">ExecutionAgent</span>
-          <span class="agent-role">Order Engine</span>
-        </div>
-        <span class="agent-badge badge-idle" id="execBadge">IDLE</span>
-      </div>
-      <div class="agent-stats">
-        <div class="stat-row">
-          <span class="stat-label">Orders Today</span>
-          <span class="stat-value" id="ordersToday">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Last Order</span>
-          <span class="stat-value" id="lastOrder">—</span>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ── CENTER: Chart Area ──────────────────────────────── -->
-  <section class="center-panel">
-    <!-- Ticker Bar -->
-    <div class="ticker-bar">
-      <div class="ticker-symbol">
-        <span id="tickerSymbol">RELIANCE</span>
-        <span class="ticker-exchange">NSE</span>
-      </div>
-      <div class="ticker-price" id="tickerPrice">₹—</div>
-      <div class="ticker-change" id="tickerChange">+0.00%</div>
-      <div class="ticker-meta">
-        <span>H: <b id="tickerHigh">—</b></span>
-        <span>L: <b id="tickerLow">—</b></span>
-        <span>Vol: <b id="tickerVol">—</b></span>
-      </div>
-    </div>
-
-    <!-- Chart Tabs -->
-    <div class="chart-tabs">
-      <button class="tab-btn active" onclick="setTimeframe('1d', this)">1D</button>
-      <button class="tab-btn" onclick="setTimeframe('5m', this)">5M</button>
-      <button class="tab-btn" onclick="setTimeframe('15m', this)">15M</button>
-      <button class="tab-btn" onclick="setTimeframe('1h', this)">1H</button>
-    </div>
-
-    <!-- Candlestick Chart -->
-    <div class="chart-container">
-      <canvas id="candleChart"></canvas>
-    </div>
-
-    <!-- Volume Chart -->
-    <div class="volume-container">
-      <canvas id="volumeChart"></canvas>
-    </div>
-
-    <!-- Signal Banner -->
-    <div class="signal-banner" id="signalBanner" style="display:none;">
-      <div class="signal-icon" id="signalIcon">📊</div>
-      <div class="signal-text">
-        <span class="signal-rec" id="signalRec">HOLD</span>
-        <span class="signal-conf" id="signalConf">Awaiting analysis…</span>
-      </div>
-      <button class="btn btn-outline" onclick="executeSignal()" id="executeBtn" style="display:none;">
-        Execute Trade
-      </button>
-    </div>
-  </section>
-
-  <!-- ── RIGHT PANEL: Trade Log + Risk ──────────────────── -->
-  <aside class="right-panel">
-
-    <!-- Risk Gauges -->
-    <div class="risk-panel">
-      <h2 class="panel-title">Risk Monitor</h2>
-
-      <div class="gauge-group">
-        <div class="gauge-item">
-          <div class="gauge-label">Loss Utilization</div>
-          <div class="gauge-track">
-            <div class="gauge-fill neon-red" id="lossGauge" style="width:0%"></div>
+      <!-- Sentiment Agent (NEW) -->
+      <div class="agent-card" id="agentSentiment">
+        <div class="agent-header">
+          <span class="agent-icon">📰</span>
+          <div class="agent-info">
+            <span class="agent-name">SentimentAgent</span>
+            <span class="agent-role">News & Geopolitics</span>
           </div>
-          <div class="gauge-vals">
-            <span id="lossUsed">₹0</span>
-            <span>₹5,000 limit</span>
-          </div>
+          <span class="agent-badge badge-idle" id="sentimentBadge">IDLE</span>
         </div>
-
-        <div class="gauge-item">
-          <div class="gauge-label">Position Utilization</div>
-          <div class="gauge-track">
-            <div class="gauge-fill neon-amber" id="posGauge" style="width:0%"></div>
+        <div class="agent-stats" id="sentimentStats">
+          <div class="stat-row">
+            <span class="stat-label">Mood</span>
+            <span class="stat-value" id="sentimentMoodStat">—</span>
           </div>
-          <div class="gauge-vals">
-            <span id="posUsed">0 lots</span>
-            <span>10 lot max</span>
+          <div class="stat-row">
+            <span class="stat-label">Score</span>
+            <span class="stat-value" id="sentimentScoreStat">—</span>
           </div>
-        </div>
-
-        <div class="gauge-item">
-          <div class="gauge-label">OPS Throttle</div>
-          <div class="gauge-track">
-            <div class="gauge-fill neon-green" id="opsGauge" style="width:5%"></div>
-          </div>
-          <div class="gauge-vals">
-            <span id="opsUsed">0/sec</span>
-            <span>10 OPS max</span>
+          <div class="stat-row">
+            <span class="stat-label">Watchlist</span>
+            <span class="stat-value small-text" id="sentimentWatchStat">—</span>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- News Highlights (NEW) -->
-    <div class="news-panel">
-      <h2 class="panel-title">📰 News Highlights <span class="live-dot">⬤</span></h2>
-      <div class="news-feed" id="newsFeed">
-        <div class="news-item placeholder">Auto-Scan to load live news…</div>
+      <div class="pipeline-arrow">↓</div>
+
+      <div class="agent-card" id="agentRoot">
+        <div class="agent-header">
+          <span class="agent-icon">🧠</span>
+          <div class="agent-info">
+            <span class="agent-name">TradingRoot</span>
+            <span class="agent-role">Orchestrator</span>
+          </div>
+          <span class="agent-badge badge-idle" id="rootBadge">IDLE</span>
+        </div>
+        <div class="agent-progress" id="rootProgress"></div>
       </div>
-    </div>
 
-    <!-- Signal Feed -->
-    <div class="signal-feed-panel">
-      <h2 class="panel-title">Signal Feed <span class="live-dot">⬤</span></h2>
-      <div class="signal-feed" id="signalFeed">
-        <div class="feed-placeholder">Awaiting first scan…</div>
+      <div class="pipeline-arrow">↓</div>
+
+      <div class="agent-card" id="agentAnalyst">
+        <div class="agent-header">
+          <span class="agent-icon">📊</span>
+          <div class="agent-info">
+            <span class="agent-name">AnalystAgent</span>
+            <span class="agent-role">Technical Analysis</span>
+          </div>
+          <span class="agent-badge badge-idle" id="analystBadge">IDLE</span>
+        </div>
+        <div class="agent-stats">
+          <div class="stat-row">
+            <span class="stat-label">RSI</span>
+            <span class="stat-value" id="rsiValue">—</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">MACD</span>
+            <span class="stat-value" id="macdValue">—</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">BB</span>
+            <span class="stat-value" id="bbValue">—</span>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Trade Log -->
-    <div class="trade-log-panel">
-      <h2 class="panel-title">Trade Log</h2>
-      <div class="trade-log" id="tradeLog">
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Symbol</th>
-              <th>Type</th>
-              <th>Qty</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="tradeLogBody">
-            <tr><td colspan="5" class="empty-row">No trades yet</td></tr>
-          </tbody>
-        </table>
+      <div class="pipeline-arrow">↓</div>
+
+      <div class="agent-card" id="agentRisk">
+        <div class="agent-header">
+          <span class="agent-icon">🛡️</span>
+          <div class="agent-info">
+            <span class="agent-name">RiskAgent</span>
+            <span class="agent-role">SEBI Guardian</span>
+          </div>
+          <span class="agent-badge badge-idle" id="riskBadge">IDLE</span>
+        </div>
+        <div class="risk-rules" id="riskRules">
+          <div class="rule-row"><span class="rule-icon">○</span> Daily Loss Limit</div>
+          <div class="rule-row"><span class="rule-icon">○</span> Position Limit</div>
+          <div class="rule-row"><span class="rule-icon">○</span> Market Hours</div>
+          <div class="rule-row"><span class="rule-icon">○</span> Order Validity</div>
+        </div>
       </div>
-    </div>
 
-  </aside>
-</main>
+      <div class="pipeline-arrow">↓</div>
 
-<!-- ══════════════════════════════════════════════════════
+      <div class="agent-card" id="agentExecution">
+        <div class="agent-header">
+          <span class="agent-icon">⚡</span>
+          <div class="agent-info">
+            <span class="agent-name">ExecutionAgent</span>
+            <span class="agent-role">Order Engine</span>
+          </div>
+          <span class="agent-badge badge-idle" id="execBadge">IDLE</span>
+        </div>
+        <div class="agent-stats">
+          <div class="stat-row">
+            <span class="stat-label">Orders Today</span>
+            <span class="stat-value" id="ordersToday">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Last Order</span>
+            <span class="stat-value" id="lastOrder">—</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── CENTER: Chart Area ──────────────────────────────── -->
+    <section class="center-panel">
+      <!-- Ticker Bar -->
+      <div class="ticker-bar">
+        <div class="ticker-symbol">
+          <span id="tickerSymbol">RELIANCE</span>
+          <span class="ticker-exchange">NSE</span>
+        </div>
+        <div class="ticker-price" id="tickerPrice">₹—</div>
+        <div class="ticker-change" id="tickerChange">+0.00%</div>
+        <div class="ticker-meta">
+          <span>H: <b id="tickerHigh">—</b></span>
+          <span>L: <b id="tickerLow">—</b></span>
+          <span>Vol: <b id="tickerVol">—</b></span>
+        </div>
+      </div>
+
+      <!-- Chart Tabs -->
+      <div class="chart-tabs">
+        <button class="tab-btn active" onclick="setTimeframe('1d', this)">1D</button>
+        <button class="tab-btn" onclick="setTimeframe('5m', this)">5M</button>
+        <button class="tab-btn" onclick="setTimeframe('15m', this)">15M</button>
+        <button class="tab-btn" onclick="setTimeframe('1h', this)">1H</button>
+      </div>
+
+      <!-- Candlestick Chart -->
+      <div class="chart-container">
+        <canvas id="candleChart"></canvas>
+      </div>
+
+      <!-- Volume Chart -->
+      <div class="volume-container">
+        <canvas id="volumeChart"></canvas>
+      </div>
+
+      <!-- Signal Banner -->
+      <div class="signal-banner" id="signalBanner" style="display:none;">
+        <div class="signal-icon" id="signalIcon">📊</div>
+        <div class="signal-text">
+          <span class="signal-rec" id="signalRec">HOLD</span>
+          <span class="signal-conf" id="signalConf">Awaiting analysis…</span>
+          <div class="signal-news" id="signalNews" style="display:none;"></div>
+        </div>
+        <button class="btn btn-outline" onclick="executeSignal()" id="executeBtn" style="display:none;">
+          Execute Trade
+        </button>
+      </div>
+    </section>
+
+    <!-- ── RIGHT PANEL: Trade Log + Risk ──────────────────── -->
+    <aside class="right-panel">
+
+      <!-- Risk Gauges -->
+      <div class="risk-panel">
+        <h2 class="panel-title">Risk Monitor</h2>
+
+        <div class="gauge-group">
+          <div class="gauge-item">
+            <div class="gauge-label">Loss Utilization</div>
+            <div class="gauge-track">
+              <div class="gauge-fill neon-red" id="lossGauge" style="width:0%"></div>
+            </div>
+            <div class="gauge-vals">
+              <span id="lossUsed">₹0</span>
+              <span>₹5,000 limit</span>
+            </div>
+          </div>
+
+          <div class="gauge-item">
+            <div class="gauge-label">Position Utilization</div>
+            <div class="gauge-track">
+              <div class="gauge-fill neon-amber" id="posGauge" style="width:0%"></div>
+            </div>
+            <div class="gauge-vals">
+              <span id="posUsed">0 lots</span>
+              <span>10 lot max</span>
+            </div>
+          </div>
+
+          <div class="gauge-item">
+            <div class="gauge-label">OPS Throttle</div>
+            <div class="gauge-track">
+              <div class="gauge-fill neon-green" id="opsGauge" style="width:5%"></div>
+            </div>
+            <div class="gauge-vals">
+              <span id="opsUsed">0/sec</span>
+              <span>10 OPS max</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- News Highlights (NEW) -->
+      <div class="news-panel">
+        <h2 class="panel-title">📰 News Highlights <span class="live-dot">⬤</span></h2>
+        <div class="news-feed" id="newsFeed">
+          <div class="news-item placeholder">Auto-Scan to load live news…</div>
+        </div>
+      </div>
+
+      <!-- Signal Feed -->
+      <div class="signal-feed-panel">
+        <h2 class="panel-title">Signal Feed <span class="live-dot">⬤</span></h2>
+        <div class="signal-feed" id="signalFeed">
+          <div class="feed-placeholder">Awaiting first scan…</div>
+        </div>
+      </div>
+
+      <!-- Trade Log -->
+      <div class="trade-log-panel">
+        <h2 class="panel-title">Trade Log</h2>
+        <div class="trade-log" id="tradeLog">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tradeLogBody">
+              <tr>
+                <td colspan="5" class="empty-row">No trades yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- ══════════════════════════════════════════════════════
      BOTTOM STATUS BAR
 ══════════════════════════════════════════════════════ -->
-<footer class="status-bar">
-  <div class="status-item">
-    <span class="status-dot dot-green"></span>
-    <span id="adkStatus">ADK: Connected</span>
-  </div>
-  <div class="status-item">
-    <span class="status-dot dot-amber"></span>
-    <span id="brokerStatus">Broker: Stub Mode</span>
-  </div>
-  <div class="status-item">
-    <span class="status-dot dot-green"></span>
-    <span>Model: Gemini 2.0 Flash</span>
-  </div>
-  <div class="status-item">
-    <span class="status-dot dot-green"></span>
-    <span>SEBI 2026: Compliant</span>
-  </div>
-  <div class="status-item">
-    <span class="status-dot dot-blue" id="newsStatusDot"></span>
-    <span id="newsStatus">News: RSS Feed</span>
-  </div>
-  <div class="status-item ml-auto">
-    <span id="sessionTime">Session: 0:00:00</span>
-  </div>
-</footer>
+  <footer class="status-bar">
+    <div class="status-item">
+      <span class="status-dot dot-green"></span>
+      <span id="adkStatus">ADK: Connected</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot dot-amber"></span>
+      <span id="brokerStatus">Broker: Stub Mode</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot dot-green"></span>
+      <span>Model: Gemini 2.0 Flash</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot dot-green"></span>
+      <span>SEBI 2026: Compliant</span>
+    </div>
+    <div class="status-item">
+      <span class="status-dot dot-blue" id="newsStatusDot"></span>
+      <span id="newsStatus">News: RSS Feed</span>
+    </div>
+    <div class="status-item ml-auto">
+      <span id="sessionTime">Session: 0:00:00</span>
+    </div>
+  </footer>
 
-<!-- Notification Toast -->
-<div class="toast-container" id="toastContainer"></div>
+  <!-- Notification Toast -->
+  <div class="toast-container" id="toastContainer"></div>
 
-<script src="js/agents.js"></script>
-<script src="js/sentiment.js"></script>
-<script src="js/app.js"></script>
+  <script src="js/agents.js"></script>
+  <script src="js/sentiment.js"></script>
+  <script src="js/app.js"></script>
 </body>
+
 </html>
