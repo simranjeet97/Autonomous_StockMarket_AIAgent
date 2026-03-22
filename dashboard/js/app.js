@@ -92,7 +92,9 @@ function initCharts() {
         }},
       }
     });
+    console.log("Candlestick chart initialized successfully");
   } catch (e) {
+    console.error("Financial plugin failed to load, falling back to line chart:", e);
     // Fall back to line chart if financial plugin not loaded
     candleChart = new Chart(canvasC, {
       type: 'line',
@@ -163,13 +165,17 @@ async function loadSymbolData(symbol) {
     }
     candleChart.data.datasets[0].label = symbol;
     candleChart.update('none');
-  } catch(e) {}
+  } catch(e) {
+    console.error("Error updating candlestick chart:", e);
+  }
 
   // Update volume
   try {
     volumeChart.data.datasets[0].data = state.candles.map(c => ({ x: c.x, y: c.volume }));
     volumeChart.update('none');
-  } catch(e) {}
+  } catch(e) {
+    console.error("Error updating volume chart:", e);
+  }
 
   // Update ticker (use last candle)
   const last = state.candles[state.candles.length - 1];
