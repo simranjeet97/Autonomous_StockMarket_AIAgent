@@ -1,5 +1,7 @@
 # ⚡ StockMarket ADK — AI Trading Agent
 
+![Dashboard UI](dashboard/UI.png)
+
 Production-ready multi-agent trading system for NSE/Nifty 50 built with **Google Agent Development Kit (ADK)** and **Gemini 3.0 Flash**.
 
 ---
