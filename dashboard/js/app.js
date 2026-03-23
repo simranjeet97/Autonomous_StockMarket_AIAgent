@@ -68,47 +68,45 @@ function initCharts() {
   const GREEN = '#00ff88', RED = '#ef4444', GREY = 'rgba(255,255,255,0.05)';
   const gridLine = { color: 'rgba(255,255,255,0.04)', lineWidth: 1 };
 
-  // ── Candlestick ────────────────────────────────────────────────
-  try {
-    candleChart = new Chart(canvasC, {
-      type: 'candlestick',
-      data: { datasets: [{ label: state.symbol, data: [], color: { up: GREEN, down: RED, unchanged: '#6b7280' }, borderColor: { up: GREEN, down: RED, unchanged: '#6b7280' } }] },
-      options: {
-        responsive: true, maintainAspectRatio: false, animation: false,
-        scales: {
-          x: { type: 'time', time: { unit: 'day' }, grid: gridLine, ticks: { color: '#4a5568', font: { family: 'JetBrains Mono', size: 10 } } },
-          y: { position: 'right', grid: gridLine, ticks: { color: '#4a5568', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '₹' + v.toLocaleString('en-IN') } },
-        },
-        plugins: { legend: { display: false }, tooltip: {
+  // ── Main Chart ────────────────────────────────────────────────
+  const ctxC = canvasC.getContext('2d');
+  const gradient = ctxC.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, 'rgba(0, 255, 136, 0.3)');
+  gradient.addColorStop(1, 'rgba(0, 255, 136, 0.0)');
+
+  candleChart = new Chart(canvasC, {
+    type: 'line',
+    data: { 
+      datasets: [{ 
+        label: state.symbol, 
+        data: [], 
+        borderColor: GREEN, 
+        backgroundColor: gradient, 
+        borderWidth: 2, 
+        pointRadius: 0, 
+        tension: 0.2,
+        fill: true
+      }] 
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      scales: {
+        x: { type: 'timeseries', time: { tooltipFormat: 'MMM D, h:mm a' }, bounds: 'ticks', grid: gridLine, ticks: { source: 'auto', autoSkip: true, color: '#4a5568', font: { family: 'JetBrains Mono', size: 10 } } },
+        y: { position: 'right', grid: gridLine, ticks: { color: '#4a5568', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '₹' + v.toLocaleString('en-IN') } },
+      },
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
           backgroundColor: 'rgba(17,24,39,0.95)',
           borderColor: 'rgba(255,255,255,0.1)',
           borderWidth: 1,
           callbacks: {
-            label: ctx => {
-              const r = ctx.raw;
-              return [`O: ₹${r.o}  H: ₹${r.h}`, `L: ₹${r.l}  C: ₹${r.c}`];
-            }
+            label: ctx => `Close: ₹${ctx.raw.y}`
           }
-        }},
-      }
-    });
-    console.log("Candlestick chart initialized successfully");
-  } catch (e) {
-    console.error("Financial plugin failed to load, falling back to line chart:", e);
-    // Fall back to line chart if financial plugin not loaded
-    candleChart = new Chart(canvasC, {
-      type: 'line',
-      data: { datasets: [{ label: state.symbol, data: [], borderColor: GREEN, backgroundColor: 'rgba(0,255,136,0.05)', borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
-      options: {
-        responsive: true, maintainAspectRatio: false, animation: false,
-        scales: {
-          x: { type: 'time', time: { unit: 'day' }, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4a5568', font: { size: 10 } } },
-          y: { position: 'right', grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#4a5568', callback: v => '₹' + v.toLocaleString('en-IN') } },
-        },
-        plugins: { legend: { display: false } },
-      }
-    });
-  }
+        }
+      },
+    }
+  });
 
   // ── Volume ─────────────────────────────────────────────────────
   volumeChart = new Chart(canvasV, {
@@ -117,7 +115,7 @@ function initCharts() {
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       scales: {
-        x: { type: 'time', time: { unit: 'day' }, display: false },
+        x: { type: 'timeseries', bounds: 'ticks', display: false },
         y: { display: false },
       },
       plugins: { legend: { display: false }, tooltip: {
@@ -131,7 +129,8 @@ async function loadSymbolData(symbol) {
   state.symbol = symbol;
   
   try {
-    const res = await fetch(`http://localhost:8000/api/history/${symbol}`);
+    const tf = state.timeframe ? state.timeframe.toLowerCase() : '1d';
+    const res = await fetch(`http://localhost:8000/api/history/${symbol}?timeframe=${tf}`);
     const data = await res.json();
     if (data.bars && data.bars.length > 0) {
       state.candles = data.bars.map(b => ({
@@ -177,24 +176,34 @@ async function loadSymbolData(symbol) {
     console.error("Error updating volume chart:", e);
   }
 
-  // Update ticker (use last candle)
+  // Connect or update WebSocket for Live TBT data
+  updateTickerAggregates(symbol);
+  connectMarketWS(symbol);
+}
+
+function updateTickerAggregates(symbol) {
+  if (!state.candles || state.candles.length === 0) return;
   const last = state.candles[state.candles.length - 1];
   const prev = state.candles[state.candles.length - 2];
+  
   if (last) {
     const chg    = last.close - (prev?.close || last.open);
     const chgPct = (chg / (prev?.close || last.open) * 100).toFixed(2);
     document.getElementById('tickerSymbol').textContent = symbol;
-    document.getElementById('tickerPrice').textContent  = '₹' + last.close.toLocaleString('en-IN');
+    document.getElementById('tickerPrice').textContent  = '₹' + last.close.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     const tc = document.getElementById('tickerChange');
     tc.textContent  = (chg >= 0 ? '+' : '') + chgPct + '%';
     tc.className    = 'ticker-change ' + (chg >= 0 ? 'positive' : 'negative');
-    document.getElementById('tickerHigh').textContent  = '₹' + last.high.toLocaleString('en-IN');
-    document.getElementById('tickerLow').textContent   = '₹' + last.low.toLocaleString('en-IN');
-    document.getElementById('tickerVol').textContent   = (last.volume / 1e5).toFixed(1) + 'L';
+    document.getElementById('tickerHigh').textContent  = '₹' + last.high.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('tickerLow').textContent   = '₹' + last.low.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
+    let volStr = '';
+    if (last.volume >= 1e7) volStr = (last.volume / 1e7).toFixed(2) + 'Cr';
+    else if (last.volume >= 1e5) volStr = (last.volume / 1e5).toFixed(2) + 'L';
+    else volStr = (last.volume || 0).toLocaleString('en-IN');
+    
+    document.getElementById('tickerVol').textContent = volStr;
   }
-
-  // Connect or update WebSocket for Live TBT data
-  connectMarketWS(symbol);
 }
 
 // ── Live WebSocket ────────────────────────────────────────────────────────────
@@ -235,15 +244,6 @@ function connectMarketWS(symbol) {
 }
 
 function updateTickerAndChart(data) {
-  // Update Ticker UI
-  document.getElementById('tickerPrice').textContent = '₹' + data.ltp.toLocaleString('en-IN');
-  const tc = document.getElementById('tickerChange');
-  const chgStr = (data.change >= 0 ? '+' : '') + data.change_pct.toFixed(2) + '%';
-  if (tc.textContent !== chgStr) {
-    tc.textContent = chgStr;
-    tc.className = 'ticker-change ' + (data.change >= 0 ? 'positive' : 'negative');
-  }
-
   // Update chart's live candle
   if (!state.candles || state.candles.length === 0) return;
   const lastCandle = state.candles[state.candles.length - 1];
@@ -252,6 +252,8 @@ function updateTickerAndChart(data) {
   lastCandle.close = data.ltp;
   if (data.ltp > lastCandle.high) lastCandle.high = data.ltp;
   if (data.ltp < lastCandle.low) lastCandle.low = data.ltp;
+  
+  updateTickerAggregates(state.symbol);
   
   if (candleChart) {
     try {

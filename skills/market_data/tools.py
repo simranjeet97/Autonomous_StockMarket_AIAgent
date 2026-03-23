@@ -90,9 +90,16 @@ def get_ohlc(symbol: str, timeframe: str = "1d", lookback_days: int = 60) -> dic
         }
 
     try:
-        start = (datetime.now() - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+        kwargs = {"interval": timeframe}
+        if timeframe in ["1m", "2m", "5m", "15m"]:
+            kwargs["period"] = "5d"
+        elif timeframe in ["30m", "60m", "90m", "1h"]:
+            kwargs["period"] = "1mo"
+        else:
+            kwargs["start"] = (datetime.now() - timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+
         ticker = yf.Ticker(_nse_ticker(symbol))
-        df = ticker.history(interval=timeframe, start=start)
+        df = ticker.history(**kwargs)
 
         if df.empty:
             return {"symbol": symbol, "timeframe": timeframe, "bars": []}

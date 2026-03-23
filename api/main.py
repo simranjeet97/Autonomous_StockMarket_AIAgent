@@ -177,9 +177,9 @@ async def ping() -> dict[str, str]:
 
 
 @app.get("/api/history/{symbol}")
-async def fetch_history(symbol: str) -> dict[str, Any]:
+async def fetch_history(symbol: str, timeframe: str = "1d") -> dict[str, Any]:
     try:
-        return get_ohlc(symbol)
+        return get_ohlc(symbol, timeframe)
     except Exception as e:
         logger.error("Error fetching historical data: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -423,6 +423,15 @@ async def get_audit_logs() -> dict[str, Any]:
         result = await session.execute(select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(50))
         logs = result.scalars().all()
         return {"status": "success", "logs": [{"agent_name": l.agent_name, "action": l.action, "timestamp": l.timestamp.isoformat()} for l in logs]}
+
+
+@app.get("/screener_research.html")
+async def serve_screener_research():
+    return FileResponse("dashboard/screener_research.html")
+
+# Include the screener router
+from api.screener_routes import router as screener_router
+app.include_router(screener_router)
 
 
 if __name__ == "__main__":
